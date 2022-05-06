@@ -1,16 +1,13 @@
 # coding: utf-8
 
-#!/usr/bin/python -O 
-
 import re
 import sys, os
 import json
 
 """
-This is a parser of G1 log of OpenJDk12.
+This is a parser of Shenandoah GC log of OpenJDk8.
 
-Required JVM option: -XX:+UnlockExperimentalVMOptions -XX:+UseZGC 
-    -Xlog:gc*=info:${GC_LOG_FILE}:utc,tm,level,tags
+Required JVM option: -Xloggc:${GC_LOG_FILE} -XX:+PrintGCDateStamps -XX:+PrintGCDetails
 
 Usage:
    java ${JVM_OPTIONS} ${ANY_OTHER_OPTIONS}
@@ -26,7 +23,6 @@ list = []
 for line in sys.stdin:
     line.rstrip()
     list.append(dict(json.loads(line)))
-        
 """
 
 ################################################################################
@@ -205,12 +201,6 @@ def get_float(match_strL):
     assert len(match_strL) == 1
     return float(match_strL[0])
 
-# match_strL :: [String] # length must be 1.
-# return :: Int 
-def get_int(match_strL):
-    assert len(match_strL) == 1
-    return int(match_strL[0])
-
 # match_strL :: [String] # length must be 3.
 # return :: [Int] # length is 3.
 def get_int3(match_strL):
@@ -236,7 +226,6 @@ regexp_timestamp = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d+\.\d+\+\d{4}"
 regexp_float = r"(\d+\.\d+)"
 regexp_heap_info = regexp_float + r"\s\(" + regexp_float + r"\s\)->" + \
                    regexp_float + r"\s\(" + regexp_float + r"\s\)\s*"
-regexp_float_secs = regexp_float + r"\s*secs\s*"
 regexp_basic_string = r"([0-9a-zA-Z_-]+)"
 
 
@@ -244,41 +233,181 @@ regexp_basic_string = r"([0-9a-zA-Z_-]+)"
 # Parsers for gc log entries.
 ################################################################################
 
-parseG1PauseYoungNormal = andP([ \
-        mkTagger("type", "G1 Evacuation Pause Young"), \
-        newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)), \
-        newP(r"\[(\d+)ms\]", mkDictModifier("timestamp", get_int)), \
-        newP(r"\[info\]\[gc\s*\]\sGC\(\d+\)\s", None), \
-        newP(r"Pause\sYoung\s\(Normal\).+" + regexp_float + r"ms$", mkDictModifier("response", get_float)), \
+parseSheConcReset = andP([
+        mkTagger("type", "She Conc Reset"),
+        newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
+        newP(r"Concurrent\sreset\s", None),
+        newP(regexp_float + r"ms$", mkDictModifier("duration", get_float)),
     ])
 if __debug__:
-    text = r"[2021-04-26T14:10:19.910+0000][1619446219910ms][info][gc ] GC(1) Pause Young (Normal) (G1 Evacuation Pause) 620M->10M(8192M) 3.803ms"
-    (ret, data) = parseG1PauseYoungNormal(text, {})
+    text = r"[2021-12-04T01:36:05.999+0800][2079.214s][9112 ][info] GC(1247) Concurrent reset 0.564ms"
+    (ret, data) = parseSheConcReset(text, {})
     print text
     print len(ret)
     print data
 
-parseG1Ignore = andP([ \
-        mkTagger("type", "G1 Ignore"), \
-        newP(r"\[(" + regexp_timestamp + r")\]", None), \
-        newP(r"\[(\d+)ms\]", None), \
-        newP(r"\[info\]\[gc,.+\].+$", None), \
+parseShePauseInitMark = andP([
+        mkTagger("type", "She Pause Init Mark"),
+        newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
+        newP(r"Pause\sInit\sMark\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
     ])
 if __debug__:
-    text = r"[2021-04-26T14:16:47.634+0000][1619446607634ms][info][gc,heap,exit ] Heap"
-    (ret, data) = parseG1Ignore(text, {})
+    text = r"[2021-12-04T01:36:06.008+0800][2079.224s][9113 ][info] GC(1247) Pause Init Mark 2.837ms"
+    (ret, data) = parseShePauseInitMark(text, {})
     print text
     print len(ret)
     print data
 
+parseSheConcMark = andP([
+        mkTagger("type", "She Conc Mark"),
+        newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
+        newP(r"Concurrent\smarking\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+    ])
+if __debug__:
+    text = r"[2021-12-04T01:36:07.200+0800][2080.416s][9112 ][info] GC(1247) Concurrent marking 1191.750ms"
+    (ret, data) = parseSheConcMark(text, {})
+    print text
+    print len(ret)
+    print data
+
+parseShePauseFinalMark = andP([
+        mkTagger("type", "She Pause Final Mark"),
+        newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
+        newP(r"Pause\sFinal\sMark\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+    ])
+if __debug__:
+    text = r"[2021-12-04T01:36:18.177+0800][2091.393s][9113 ][info] GC(1258) Pause Final Mark 3.618ms"
+    (ret, data) = parseShePauseFinalMark(text, {})
+    print text
+    print len(ret)
+    print data
+
+parseSheConcCleanup = andP([
+        mkTagger("type", "She Conc Cleanup"),
+        newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
+        newP(r"Concurrent\scleanup\s.+M\)\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+    ])
+if __debug__:
+    text = r"[2021-12-04T01:36:18.178+0800][2091.393s][9112 ][info] GC(1258) Concurrent cleanup 9386M->9536M(16384M) 0.255ms"
+    (ret, data) = parseSheConcCleanup(text, {})
+    print text
+    print len(ret)
+    print data
+
+parseSheConcEvac = andP([ \
+        mkTagger("type", "She Conc Evacuation"), \
+        newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
+        newP(r"Concurrent\sevacuation\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+    ])
+if __debug__:
+    text = r"[2021-12-04T01:36:18.189+0800][2091.405s][9112 ][info] GC(1258) Concurrent evacuation 11.407ms"
+    (ret, data) = parseSheConcEvac(text, {})
+    print text
+    print len(ret)
+    print data
+
+parseShePauseInitUpdateRefs = andP([
+        mkTagger("type", "She Pause Init Update Refs"),
+        newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
+        newP(r"Pause\sInit\sUpdate\sRefs\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+    ])
+if __debug__:
+    text = r"[2021-12-04T01:36:18.191+0800][2091.407s][9113 ][info] GC(1258) Pause Init Update Refs 0.150ms"
+    (ret, data) = parseShePauseInitUpdateRefs(text, {})
+    print text
+    print len(ret)
+    print data
+
+parseSheConcUpdateRefs = andP([
+        mkTagger("type", "She Conc Update Refs"),
+        newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
+        newP(r"Concurrent\supdate\sreferences\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+    ])
+if __debug__:
+    text = r"[2021-12-04T01:36:18.672+0800][2091.887s][9112 ][info] GC(1258) Concurrent update references 480.551ms"
+    (ret, data) = parseSheConcUpdateRefs(text, {})
+    print text
+    print len(ret)
+    print data
+
+parseShePauseFinalUpdateRefs = andP([
+        mkTagger("type", "She Pause Final Update Refs"),
+        newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
+        newP(r"Pause\sFinal\sUpdate\sRefs\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+    ])
+if __debug__:
+    text = r"[2021-12-04T01:36:18.675+0800][2091.890s][9113 ][info] GC(1258) Pause Final Update Refs 0.814ms"
+    (ret, data) = parseShePauseFinalUpdateRefs(text, {})
+    print text
+    print len(ret)
+    print data
+
+parseShePauseFull = andP([
+        mkTagger("type", "She Pause Full"),
+        newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
+        newP(r"Pause\sFull\s.+M\)\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+    ])
+if __debug__:
+    text = r"[2021-12-03T22:17:35.493+0800][122.471s][77549][info] GC(18) Pause Full 15546M->5928M(16384M) 2699.792ms"
+    (ret, data) = parseShePauseInitUpdateRefs(text, {})
+    print text
+    print len(ret)
+    print data
+
+parseHeap = andP([ \
+        newP(r"\[Eden:\s+" + regexp_heap_info, mkDictModifier("Eden", get_string)), \
+        newP(r"Survivors:\s+" + regexp_heap_info, mkDictModifier("Survivors", get_string)), \
+        newP(r"Heap:\s+" + regexp_heap_info + r"\]\s*", mkDictModifier("Heap", get_string)), \
+    ])
 
 """
 Java GC Log parser.
 This supports almost kinds of GC provided by JVM.
 
+-XX:+UseShenandoahGC
+Events:
+  ConcReset
+  PauseInitMark
+  ConcMark
+  PauseFinalMark
+  ConcCleanup
+  ConcEvac
+  PauseInitUpdateRefs
+  ConcUpdateRefs
+  PauseFinalUpdateRefs
+  PauseFull
 """
-parseJavaGcLog = orP([ \
-        parseG1PauseYoungNormal, parseG1Ignore\
+parseJavaGcLog = orP([
+        parseSheConcReset,
+        parseShePauseInitMark,
+        parseSheConcMark,
+        parseShePauseFinalMark,
+        parseSheConcCleanup,
+        parseSheConcEvac,
+        parseShePauseInitUpdateRefs,
+        parseSheConcUpdateRefs,
+        parseShePauseFinalUpdateRefs,
+        parseShePauseFull,
     ])
 
 
@@ -312,14 +441,14 @@ def convertLastToInt(list):
 
 # Parser of list of integer. This is for test.
 parseIntList = andP([
-        newP(r"\s*\[\s*", None), 
+        newP(r"\s*\[\s*", None),
         manyP(
                 andP([
                         newP(r"(\d+)\s*(?:,\s*)?", mkListAppender()),
-                        appP(convertLastToInt), 
+                        appP(convertLastToInt),
                     ])
-             ), 
-        newP(r"\s*\]\s*", None), 
+             ),
+        newP(r"\s*\]\s*", None),
     ])
 if __debug__:
     text = r"[10, 20, 30]"
@@ -332,12 +461,12 @@ if __debug__:
 ################################################################################
 # main
 ################################################################################
-    
+
 dirs = sys.argv[1]
 allfiles = os.listdir(dirs)
 files = []
 for f in allfiles:
-    if f.startswith('gclog') and f.endswith('log'):
+    if f.startswith('gc_She') and f.endswith('log'):
         files.append(f)
 
 for file in files:
@@ -350,15 +479,16 @@ for file in files:
                 text = line.rstrip()
                 #print texts
                 (ret, data) = parseJavaGcLog(text, {})
-                print(file)
+                #print(file)
                 if __debug__:
                     print ("len: %d" % len(ret))
                 # print json.dumps(data)
                 output.append(data)
             except ParseError, msg:
                 #print msg
-                print ("###%s" % text)
-        with open(dirs+file+'_2','w') as fd:
+                #print ("###%s" % text)
+                pass
+        with open(dirs+file[0:-3]+'json','w') as fd:
             fd.write(json.dumps(output))
 
 # end of file.
