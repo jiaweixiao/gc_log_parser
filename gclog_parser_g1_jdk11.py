@@ -380,7 +380,7 @@ parseG1PauseCleanup = andP([
         newP(r"Pause\sCleanup\s.+\)\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
     ])
 if __debug__:
-    text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] Pause Cleanup 29333M->29333M(32768M) 123.489ms"
+    text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] GC(1) Pause Cleanup 29333M->29333M(32768M) 123.489ms"
     (ret, data) = parseG1PauseCleanup(text, {})
     print text
     print len(ret)
@@ -394,7 +394,7 @@ parseG1ConcCleanupForNextMark = andP([
         newP(r"Concurrent\sCleanup\sfor\sNext\sMark\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
     ])
 if __debug__:
-    text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] Concurrent Cleanup for Next Mark 1450.105ms"
+    text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] GC(1) Concurrent Cleanup for Next Mark 1450.105ms"
     (ret, data) = parseG1ConcCleanupForNextMark(text, {})
     print text
     print len(ret)
@@ -408,7 +408,7 @@ parseG1ConcCycle = andP([
         newP(r"Concurrent\sCycle\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
     ])
 if __debug__:
-    text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] Concurrent Cycle 162378.486ms"
+    text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] GC(1) Concurrent Cycle 162378.486ms"
     (ret, data) = parseG1ConcCycle(text, {})
     print text
     print len(ret)
@@ -530,6 +530,9 @@ if __name__=='__main__':
         if f.endswith('gclog'):
             files.append(f)
 
+    if len(files) == 0:
+        print('No gclog to parse')
+        exit(0)
     pool = Pool(processes=len(files))
     multi_results = []
 
