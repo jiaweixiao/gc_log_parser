@@ -249,9 +249,9 @@ regexp_basic_string = r"([0-9a-zA-Z_-]+)"
 parseG1PauseYoungNormal = andP([
         mkTagger("type", "G1 Pause Young Normal"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Pause\sYoung\s\(Normal\).+M\)\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Pause\sYoung\s\(Normal\).+M\)\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-09-10T15:23:34.217+0800][123.534s][76035][info] GC(33) Pause Young (Normal) (G1 Evacuation Pause) 4269M->3358M(16384M) 170.022ms"
@@ -263,9 +263,9 @@ if __debug__:
 parseG1PauseYoungConcStart = andP([
         mkTagger("type", "G1 Pause Young Concurrent Start"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Pause\sYoung\s\(Concurrent Start\).+M\)\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Pause\sYoung\s\(Concurrent Start\).+M\)\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-09-13T09:52:04.024+0800][334.724s][43043][info] GC(126) Pause Young (Concurrent Start) (Metadata GC Threshold) 28810M->27895M(32768M) 406.544ms"
@@ -277,9 +277,9 @@ if __debug__:
 parseG1ConcClearClaimedMarks = andP([
         mkTagger("type", "G1 Concurrent Clear Claimed Marks"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Concurrent\sClear\sClaimed\sMarks\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Concurrent\sClear\sClaimed\sMarks\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-09-13T09:52:04.024+0800][334.725s][43039][info] GC(127) Concurrent Clear Claimed Marks 0.289ms"
@@ -291,9 +291,9 @@ if __debug__:
 parseG1ConcScanRootRegions = andP([
         mkTagger("type", "G1 Concurrent Scan Root Regions"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Concurrent\sScan\sRoot\sRegions\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Concurrent\sScan\sRoot\sRegions\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] GC(127) Concurrent Scan Root Regions 357.650ms"
@@ -305,9 +305,9 @@ if __debug__:
 parseG1ConcMarkFromRoots = andP([
         mkTagger("type", "G1 Concurrent Mark From Roots"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Concurrent\sMark\sFrom\sRoots\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Concurrent\sMark\sFrom\sRoots\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] GC(127) Concurrent Mark From Roots 95457.427ms"
@@ -319,9 +319,9 @@ if __debug__:
 parseG1ConcPreclean = andP([
         mkTagger("type", "G1 Concurrent Preclean"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Concurrent\sPreclean\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Concurrent\sPreclean\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] GC(127) Concurrent Preclean 23.327ms"
@@ -333,9 +333,9 @@ if __debug__:
 parseG1ConcMark = andP([
         mkTagger("type", "G1 Concurrent Mark"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Concurrent\sMark\s\(.+\)\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Concurrent\sMark\s\(.+\)\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] GC(127) Concurrent Mark (335.083s, 430.567s) 95484.072ms"
@@ -347,9 +347,9 @@ if __debug__:
 parseG1PauseRemark = andP([
         mkTagger("type", "G1 Pause Remark"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Pause\sRemark.+\)\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Pause\sRemark.+\)\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] GC(127) Pause Remark 28680M->28632M(32768M) 236.947ms"
@@ -361,9 +361,9 @@ if __debug__:
 parseG1ConcRebuildRemSets = andP([
         mkTagger("type", "G1 Concurrent Rebuild Remembered Sets"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Concurrent\sRebuild\sRemembered\sSets\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Concurrent\sRebuild\sRemembered\sSets\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] GC(127) Concurrent Rebuild Remembered Sets 64694.748ms"
@@ -375,9 +375,9 @@ if __debug__:
 parseG1PauseCleanup = andP([
         mkTagger("type", "G1 Pause Cleanup"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Pause\sCleanup\s.+\)\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Pause\sCleanup\s.+\)\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] GC(1) Pause Cleanup 29333M->29333M(32768M) 123.489ms"
@@ -389,9 +389,9 @@ if __debug__:
 parseG1ConcCleanupForNextMark = andP([
         mkTagger("type", "G1 Concurrent Cleanup"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Concurrent\sCleanup\sfor\sNext\sMark\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Concurrent\sCleanup\sfor\sNext\sMark\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] GC(1) Concurrent Cleanup for Next Mark 1450.105ms"
@@ -403,9 +403,9 @@ if __debug__:
 parseG1ConcCycle = andP([
         mkTagger("type", "G1 Concurrent Cycle"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Concurrent\sCycle\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Concurrent\sCycle\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-09-13T09:52:04.382+0800][335.083s][43039][info] GC(1) Concurrent Cycle 162378.486ms"
@@ -417,9 +417,9 @@ if __debug__:
 parseG1PauseFull = andP([
         mkTagger("type", "G1 Pause Full"),
         newP(r"\[(" + regexp_timestamp + r")\]", mkDictModifier("utc", get_string)),
-        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("endtime", get_float)),
+        newP(r"\[" + regexp_float + r"s\]", mkDictModifier("end_sec", get_float)),
         newP(r"\[\d+\]\[info\]\sGC\(\d+\)\s", None),
-        newP(r"Pause\sFull\s\(G1\sEva.+M\)\s" + regexp_float + r"ms$", mkDictModifier("duration", get_float)),
+        newP(r"Pause\sFull\s\(G1\sEva.+M\)\s" + regexp_float + r"ms$", mkDictModifier("dur_ms", get_float)),
     ])
 if __debug__:
     text = r"[2021-12-01T11:12:32.486+0800][411.094s][13338][info] GC(203) Pause Full (G1 Evacuation Pause) 15656M->13641M(16384M) 4391.867ms"
